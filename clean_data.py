@@ -1,9 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-# label encoder object used to label encode data for one hot encoding
-label_encoder = LabelEncoder()
-
 # Import card dataframe
 card_df = pd.read_pickle("card_df.pkl")
 
@@ -64,17 +61,24 @@ card_df['weaknesses'] = card_df['weaknesses'].astype(str)
 
 card_df['evolvesFrom'] = card_df['evolvesFrom'].astype(str)
 
+# Store the label encoders used to encode each column
+encoders = {}
+ohe_card_df = pd.DataFrame()
 
 for column in card_df.columns:
     if card_df[column].dtype == 'object':
-        card_df[column] = label_encoder.fit_transform(card_df[column].astype(str))
+        label_encoder = LabelEncoder()
+        ohe_card_df[column] = label_encoder.fit_transform(card_df[column].astype(str))
+        encoders[column] = label_encoder
 
-# Print columns of dataframe to verify conversion
-columns = card_df.columns
-for column in columns:
-    print(card_df[column])
+# Create a dataframe to store the decoding dictionaries
+decoding_dict = pd.DataFrame(columns=['column_name', 'encoding', 'decoding'])
 
+# Loop through each column's label encoder and store the decoding dictionary
+for column, le in encoders.items():
+    decoding = dict(zip(le.classes_, le.transform(le.classes_)))
+    temp_df = pd.DataFrame({'column_name': [column] * len(decoding), 'encoding': list(decoding.keys()), 'decoding': list(decoding.values())})
+    decoding_dict = pd.concat([decoding_dict, temp_df], ignore_index=True)
 
-ohe_card_df = pd.get_dummies(card_df)
-print(ohe_card_df)
 pd.to_pickle(ohe_card_df, 'ohe_card_df.pkl')
+pd.to_pickle(decoding_dict, 'decoding_dict.pkl')
