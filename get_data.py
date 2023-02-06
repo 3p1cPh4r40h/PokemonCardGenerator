@@ -18,7 +18,7 @@ for card in cards:
         "evolvesFrom": card.evolvesFrom
     }
     cards_array.append(card_info)
-print(cards_array.__len__)
+
 card_df = pd.DataFrame(cards_array)
 pd.to_pickle(card_df, 'card_df.pkl')
 print(card_df.head())
