@@ -75,10 +75,12 @@ for column in card_df.columns:
 decoding_dict = pd.DataFrame(columns=['column_name', 'encoding', 'decoding'])
 
 # Loop through each column's label encoder and store the decoding dictionary
-for column, le in encoders.items():
-    decoding = dict(zip(le.classes_, le.transform(le.classes_)))
+for column, label_encoder in encoders.items():
+    decoding = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
     temp_df = pd.DataFrame({'column_name': [column] * len(decoding), 'encoding': list(decoding.keys()), 'decoding': list(decoding.values())})
     decoding_dict = pd.concat([decoding_dict, temp_df], ignore_index=True)
 
 pd.to_pickle(ohe_card_df, 'ohe_card_df.pkl')
 pd.to_pickle(decoding_dict, 'decoding_dict.pkl')
+print(ohe_card_df.head())
+print(decoding_dict)
