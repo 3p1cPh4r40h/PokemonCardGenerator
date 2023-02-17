@@ -20,5 +20,5 @@ for card in cards:
     cards_array.append(card_info)
 
 card_df = pd.DataFrame(cards_array)
-pd.to_pickle(card_df, 'card_df.pkl')
+pd.to_pickle(card_df, 'data\card_df.pkl')
 print(card_df.head())
