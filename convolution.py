@@ -17,34 +17,36 @@ decoding_dict = pd.read_pickle('data\decoding_dict.pkl')
 # Split data into train and test sets
 train_df, test_df = train_test_split(ohe_card_df, test_size=0.2, random_state=42)
 
-# Get the number of columns in the one hot encoded dataframe
-n_cols = train_df.shape[1]
+# Reshape the data into 3D tensors for use in the CNN
+train_data = np.reshape(train_df.values, (train_df.shape[0], train_df.shape[1], 1))
+test_data = np.reshape(test_df.values, (test_df.shape[0], test_df.shape[1], 1))
 
 # Define the model
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(64, activation='relu', input_shape=(n_cols,)),
+    tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=(train_data.shape[1], 1)),
+    tf.keras.layers.MaxPooling1D(pool_size=2),
+    tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dense(n_cols)
+    tf.keras.layers.Dense(ohe_card_df.shape[1], activation='softmax')
 ])
 
 # Compile the model
-model.compile(optimizer='adam', loss='mean_squared_error')
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Train the model
-model.fit(train_df, train_df, epochs=10)
+train_labels = np.argmax(train_data, axis=1)
+train_labels_cat = tf.keras.utils.to_categorical(train_labels, num_classes=ohe_card_df.shape[1])
+model.fit(train_data, train_labels_cat, epochs=10)
 
 # Predict the values
-predictions = model.predict(test_df)
+predictions = model.predict(test_data)
 print(predictions.shape)
 print(predictions)
 
-# Set up prediction dataframe, round values to integers, and decode predictions
-prediction_df = pd.DataFrame(predictions, columns=ohe_card_df.columns)
-prediction_df = prediction_df.apply(lambda x: round(x)).astype(int)
-decoded_predictions = decode_df(decoding_dict, prediction_df)
+# Decode predictions
+decoded_predictions = decode_df(decoding_dict, pd.DataFrame(predictions, columns=ohe_card_df.columns))
 print(decoded_predictions)
 
 # Save predicted values and network
-pd.to_pickle(prediction_df,'data\prediction_df.pkl')
-pd.to_pickle(decoded_predictions, 'data\decoded_predictions.pkl')
-model.save('model.h5')
+pd.to_pickle(decoded_predictions, 'data\decoded_predictions_cnn.pkl')
+model.save('model_cnn.h5')
