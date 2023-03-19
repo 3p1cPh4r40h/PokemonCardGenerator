@@ -50,14 +50,14 @@ for i, row in card_df.iterrows():
         # loop over each attack
         for j in range(len(attacks)):
             attack = attacks[j]
-            card_df.at[i, 'attack_text_{}'.format(j + 1)] = attack.name
+            card_df.at[i, 'attack_name_{}'.format(j + 1)] = attack.name
             card_df.at[i, 'attack_text_{}'.format(j + 1)] = attack.text
             card_df.at[i, 'attack_damage_{}'.format(j + 1)] = attack.damage
             card_df.at[i, 'attack_convertedEnergyCost_{}'.format(j + 1)] = attack.convertedEnergyCost
     else:
         # set attack information to None or empty string
         for j in range(4):
-            card_df.at[i, 'attack_text_{}'.format(j + 1)] = None
+            card_df.at[i, 'attack_name_{}'.format(j + 1)] = None
             card_df.at[i, 'attack_text_{}'.format(j + 1)] = None
             card_df.at[i, 'attack_damage_{}'.format(j + 1)] = None
             card_df.at[i, 'attack_convertedEnergyCost_{}'.format(j + 1)] = None
@@ -75,6 +75,8 @@ card_df['evolvesFrom'] = card_df['evolvesFrom'].astype(str)
 label_encoders = {}
 attack_damage_encoder = LabelEncoder()
 attack_convertedEnergyCost_encoder = LabelEncoder()
+label_encoders['attack_damage'] = attack_damage_encoder
+label_encoders['attack_convertedEnergyCost'] = attack_convertedEnergyCost_encoder
 # Store label encoded data
 le_card_df = pd.DataFrame()
 print(card_df.columns)
@@ -174,6 +176,7 @@ print(oh_card_df.head())
 
 # Decode the label encoded data
 for column, label_encoder in label_encoders.items():
+    print(column)
     le_card_df[column] = le_card_df[column].map(dict(zip(label_encoder.transform(label_encoder.classes_), label_encoder.classes_)))
 
 # Decode the onehot encoded data
@@ -189,12 +192,10 @@ for column in ['subtypes', 'rules', 'legalities', 'attack_name', 'attack_text']:
 # Combine the label encoded and onehot encoded data into a single dataframe
 decoded_card_df = le_card_df.join(oh_card_df[['subtypes', 'rules', 'legalities', 'attack_name', 'attack_text']])
 
-# print decoded dataframe head
-print(decoded_card_df.head())
-
 # Reorder columns
 decoded_card_df = decoded_card_df[['name', 'subtypes', 'rules', 'types', 'hp', 'weaknesses', 'convertedRetreatCost', 'legalities', 'evolvesFrom', 'attack_name', 'attack_text', 'attack_damage', 'attack_convertedEnergyCost']]
 
 # Display the decoded data
 print(decoded_card_df.head())
+print(card_df[['name', 'subtypes', 'rules', 'types', 'hp', 'weaknesses', 'convertedRetreatCost', 'legalities', 'evolvesFrom', 'attack_name_1', 'attack_text_1', 'attack_damage_1', 'attack_convertedEnergyCost_1']].head())
 decoded_card_df.to_csv("decoded_card_df.csv")
