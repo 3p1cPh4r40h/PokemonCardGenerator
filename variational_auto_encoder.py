@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 
 def decode_df(decoding, encoded):
     def lookup_encoding(col_name, value):
@@ -41,7 +42,8 @@ def sampling(args):
 
 # Encoder network
 inputs = tf.keras.layers.Input(shape=input_shape)
-x = tf.keras.layers.Dense(hidden_size, activation='relu')(inputs)
+x = tf.keras.layers.Conv1D(filters=2, kernel_size=3, padding='same', activation='relu')(inputs)
+x = tf.keras.layers.Dense(hidden_size, activation='relu')(x)
 x = tf.keras.layers.Flatten()(x)
 x = tf.keras.layers.Dense(hidden_size, activation='relu')(x)
 z_mean = tf.keras.layers.Dense(latent_dim, name='z_mean')(x)
@@ -74,7 +76,20 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=0.00001)
 vae.compile(optimizer=optimizer)
 
 # Train the model
-vae.fit(train_df, epochs=15, batch_size=32)
+history = vae.fit(train_df, epochs=100, batch_size=32, validation_data=(test_df, None))
+
+
+# Check for overfitting by comparing training and validation loss
+train_loss = history.history['loss']
+val_loss = history.history['val_loss']
+epochs = range(1, len(train_loss) + 1)
+plt.plot(epochs, train_loss, 'bo', label='Training loss')
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
 
 # Generate new data by sampling from the latent space
 n_samples = 100
@@ -92,4 +107,6 @@ print(decoded_df.head())
 vae.save('model_vae.tf', save_format='tf')
 
 # Save the decoded predictions
-pd.to_pickle(decoded_df, 'vae_results.pkl')
+pd.to_pickle(decoded_df, 'data/vae_results.pkl')
+
+decoded_df.to_csv('data.csv')
