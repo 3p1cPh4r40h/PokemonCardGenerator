@@ -137,8 +137,8 @@ card_df.fillna('NA')
 first_attack_names = card_df['attack_name_1']
 first_attack_texts = card_df['attack_text_1']
 
-names_values = first_attack_names.values.reshape(-1,1)
-texts_values = first_attack_texts.values.reshape(-1,1)
+names_values = first_attack_names.astype(str).values.reshape(-1,1)
+texts_values = first_attack_texts.astype(str).values.reshape(-1,1)
 
 # Onehot encode attacks
 attack_encoded_name_data = attack_name_encoder.fit_transform(names_values)
@@ -184,16 +184,17 @@ for column in ['subtypes', 'rules', 'legalities', 'attack_name', 'attack_text']:
         row = oh_card_df.iloc[i][column]
         decoded_values = [decoding_dict[j] for j, val in enumerate(row) if val == 1]
         decoded_data.append(', '.join(decoded_values))
-    le_card_df[column] = decoded_data
+    oh_card_df[column] = decoded_data
 
 # Combine the label encoded and onehot encoded data into a single dataframe
-decoded_card_df = le_card_df.join(card_df[['types', 'hp', 'weaknesses', 'convertedRetreatCost', 'evolvesFrom', 'attack_damage_1', 'attack_convertedEnergyCost_1']])
+decoded_card_df = le_card_df.join(oh_card_df[['subtypes', 'rules', 'legalities', 'attack_name', 'attack_text']])
 
-# Rename columns
-decoded_card_df = decoded_card_df.rename(columns={'attack_damage_1': 'attack_damage', 'attack_convertedEnergyCost_1': 'attack_convertedEnergyCost'})
+# print decoded dataframe head
+print(decoded_card_df.head())
 
 # Reorder columns
 decoded_card_df = decoded_card_df[['name', 'subtypes', 'rules', 'types', 'hp', 'weaknesses', 'convertedRetreatCost', 'legalities', 'evolvesFrom', 'attack_name', 'attack_text', 'attack_damage', 'attack_convertedEnergyCost']]
 
 # Display the decoded data
 print(decoded_card_df.head())
+decoded_card_df.to_csv("decoded_card_df.csv")
