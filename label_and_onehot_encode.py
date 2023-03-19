@@ -167,7 +167,7 @@ for column, onehot_encoder in onehot_encoders.items():
 
 pd.to_pickle(le_card_df, 'test_data\label_encoded_df.pkl')
 pd.to_pickle(oh_card_df, 'test_data\oh_encoded_df.pkl')
-pd.to_pickle(label_decoding_df, 'test_data\label_decoding_dict.pkl')
+pd.to_pickle(label_encoders, 'test_data\label_encoders.pkl')
 pd.to_pickle(oh_decoding_dict, 'test_data\oh_decoding_dict.pkl')
 print(le_card_df.head())
 print(oh_card_df.head())
