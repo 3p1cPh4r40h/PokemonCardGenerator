@@ -50,14 +50,14 @@ for i, row in card_df.iterrows():
         # loop over each attack
         for j in range(len(attacks)):
             attack = attacks[j]
-            card_df.at[i, 'attack_text_{}'.format(j + 1)] = attack.name
+            card_df.at[i, 'attack_name_{}'.format(j + 1)] = attack.name
             card_df.at[i, 'attack_text_{}'.format(j + 1)] = attack.text
             card_df.at[i, 'attack_damage_{}'.format(j + 1)] = attack.damage
             card_df.at[i, 'attack_convertedEnergyCost_{}'.format(j + 1)] = attack.convertedEnergyCost
     else:
         # set attack information to None or empty string
         for j in range(4):
-            card_df.at[i, 'attack_text_{}'.format(j + 1)] = None
+            card_df.at[i, 'attack_name_{}'.format(j + 1)] = None
             card_df.at[i, 'attack_text_{}'.format(j + 1)] = None
             card_df.at[i, 'attack_damage_{}'.format(j + 1)] = None
             card_df.at[i, 'attack_convertedEnergyCost_{}'.format(j + 1)] = None
@@ -75,6 +75,8 @@ card_df['evolvesFrom'] = card_df['evolvesFrom'].astype(str)
 label_encoders = {}
 attack_damage_encoder = LabelEncoder()
 attack_convertedEnergyCost_encoder = LabelEncoder()
+label_encoders['attack_damage'] = attack_damage_encoder
+label_encoders['attack_convertedEnergyCost'] = attack_convertedEnergyCost_encoder
 # Store label encoded data
 le_card_df = pd.DataFrame()
 print(card_df.columns)
@@ -137,8 +139,8 @@ card_df.fillna('NA')
 first_attack_names = card_df['attack_name_1']
 first_attack_texts = card_df['attack_text_1']
 
-names_values = first_attack_names.values.reshape(-1,1)
-texts_values = first_attack_texts.values.reshape(-1,1)
+names_values = first_attack_names.astype(str).values.reshape(-1,1)
+texts_values = first_attack_texts.astype(str).values.reshape(-1,1)
 
 # Onehot encode attacks
 attack_encoded_name_data = attack_name_encoder.fit_transform(names_values)
@@ -165,7 +167,7 @@ for column, onehot_encoder in onehot_encoders.items():
 
 pd.to_pickle(le_card_df, 'test_data\label_encoded_df.pkl')
 pd.to_pickle(oh_card_df, 'test_data\oh_encoded_df.pkl')
-pd.to_pickle(label_decoding_df, 'test_data\label_decoding_dict.pkl')
+pd.to_pickle(label_encoders, 'test_data\label_encoders.pkl')
 pd.to_pickle(oh_decoding_dict, 'test_data\oh_decoding_dict.pkl')
 print(le_card_df.head())
 print(oh_card_df.head())
@@ -174,6 +176,7 @@ print(oh_card_df.head())
 
 # Decode the label encoded data
 for column, label_encoder in label_encoders.items():
+    print(column)
     le_card_df[column] = le_card_df[column].map(dict(zip(label_encoder.transform(label_encoder.classes_), label_encoder.classes_)))
 
 # Decode the onehot encoded data
@@ -184,16 +187,15 @@ for column in ['subtypes', 'rules', 'legalities', 'attack_name', 'attack_text']:
         row = oh_card_df.iloc[i][column]
         decoded_values = [decoding_dict[j] for j, val in enumerate(row) if val == 1]
         decoded_data.append(', '.join(decoded_values))
-    le_card_df[column] = decoded_data
+    oh_card_df[column] = decoded_data
 
 # Combine the label encoded and onehot encoded data into a single dataframe
-decoded_card_df = le_card_df.join(card_df[['types', 'hp', 'weaknesses', 'convertedRetreatCost', 'evolvesFrom', 'attack_damage_1', 'attack_convertedEnergyCost_1']])
-
-# Rename columns
-decoded_card_df = decoded_card_df.rename(columns={'attack_damage_1': 'attack_damage', 'attack_convertedEnergyCost_1': 'attack_convertedEnergyCost'})
+decoded_card_df = le_card_df.join(oh_card_df[['subtypes', 'rules', 'legalities', 'attack_name', 'attack_text']])
 
 # Reorder columns
 decoded_card_df = decoded_card_df[['name', 'subtypes', 'rules', 'types', 'hp', 'weaknesses', 'convertedRetreatCost', 'legalities', 'evolvesFrom', 'attack_name', 'attack_text', 'attack_damage', 'attack_convertedEnergyCost']]
 
 # Display the decoded data
 print(decoded_card_df.head())
+print(card_df[['name', 'subtypes', 'rules', 'types', 'hp', 'weaknesses', 'convertedRetreatCost', 'legalities', 'evolvesFrom', 'attack_name_1', 'attack_text_1', 'attack_damage_1', 'attack_convertedEnergyCost_1']].head())
+decoded_card_df.to_csv("decoded_card_df.csv")
