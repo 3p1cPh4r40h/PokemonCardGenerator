@@ -18,9 +18,10 @@ with open("test_data/oh_encoded_df.pkl","rb") as k:
 with open("test_data/label_encoded_df.pkl","rb") as l:
     labeldf = pickle.load(l)
 
-x = np.array(ohdf)
-y = np.array(labeldf)
-
+x = np.array(ohdf,dtype=object)
+x = np.asarray(x).astype('float32')
+y = np.array(labeldf,dtype=object)
+y = np.asarray(y).astype('float32')
 #preparing the test and train sets with the test set being 30% of the data
 traindata, testdata, trainlabel, testlabel = train_test_split(x,y, test_size=0.3, random_state=42)
 
@@ -38,7 +39,7 @@ testdata = testdata.reshape((testdata.shape[0], steps, features))
 
 model = Sequential()
 
-model.add(SimpleRNN(32,input_shape=(steps, features),activation="relu"))
+model.add(SimpleRNN(32,input_shape=(traindata.shape[1],),activation="relu"))
 model.add(Dense(8,activation='relu'))
 model.add(Dense(1))
 
