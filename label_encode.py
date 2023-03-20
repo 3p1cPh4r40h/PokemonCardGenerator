@@ -10,7 +10,7 @@ print(len(card_df))
 print(card_df.head())
 
 
-# Prepare values for label encoding
+# Prepare values for encoding
 card_df['hp'] = card_df['hp'].astype(int)
 card_df['convertedRetreatCost'] = card_df['convertedRetreatCost'].fillna(0)
 card_df['convertedRetreatCost'] = card_df['convertedRetreatCost'].astype(int)
@@ -25,41 +25,42 @@ card_df['rules'] = card_df['rules'].astype(str)
 card_df['types'] = card_df['types'].astype(str)
 
 # create new columns for each element of an attack
-card_df['attack_text_1'] = None
-card_df['attack_text_2'] = None
-card_df['attack_text_3'] = None
-card_df['attack_text_4'] = None
-card_df['attack_damage_1'] = None
-card_df['attack_damage_2'] = None
-card_df['attack_damage_3'] = None
-card_df['attack_damage_4'] = None
-card_df['attack_convertedEnergyCost_1'] = None
-card_df['attack_convertedEnergyCost_2'] = None
-card_df['attack_convertedEnergyCost_3'] = None
-card_df['attack_convertedEnergyCost_4'] = None
+card_df['attack_name'] = None
+
+card_df['attack_text'] = None
+
+card_df['attack_damage'] = None
+
+card_df['attack_convertedEnergyCost'] = None
+
 
 for i, row in card_df.iterrows():
     attacks = row['attacks']
     if attacks:
-        # loop over each attack
-        for j in range(len(attacks)):
-            attack = attacks[j]
-            card_df.at[i, 'attack_text_{}'.format(j + 1)] = attack.text
-            card_df.at[i, 'attack_damage_{}'.format(j + 1)] = attack.damage
-            card_df.at[i, 'attack_convertedEnergyCost_{}'.format(j + 1)] = attack.convertedEnergyCost
+        # record first attack
+       
+        attack = attacks[0]
+        card_df.at[i, 'attack_name'] = attack.name
+        card_df.at[i, 'attack_text'] = attack.text
+        card_df.at[i, 'attack_damage'] = attack.damage
+        card_df.at[i, 'attack_convertedEnergyCost'] = attack.convertedEnergyCost
     else:
         # set attack information to None or empty string
-        for j in range(4):
-            card_df.at[i, 'attack_text_{}'.format(j + 1)] = None
-            card_df.at[i, 'attack_damage_{}'.format(j + 1)] = None
-            card_df.at[i, 'attack_convertedEnergyCost_{}'.format(j + 1)] = None
+        
+        card_df.at[i, 'attack_name'] = None
+        card_df.at[i, 'attack_text'] = None
+        card_df.at[i, 'attack_damage']= None
+        card_df.at[i, 'attack_convertedEnergyCost'] = None
 
-card_df.drop('attacks', axis=1)
+# Drop unnecesary attacks column
+card_df = card_df.drop('attacks', axis=1)
+
 
 card_df['weaknesses'] = [str(i) for i in card_df['weaknesses']]
 card_df['weaknesses'] = card_df['weaknesses'].astype(str)
 
 card_df['evolvesFrom'] = card_df['evolvesFrom'].astype(str)
+
 
 # Store the label encoders used to encode each column
 encoders = {}
