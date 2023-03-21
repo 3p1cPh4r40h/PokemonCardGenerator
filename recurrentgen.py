@@ -40,17 +40,19 @@ test_y = test[:,-1]
 model = Sequential()
 
 model.add(Input(shape=(steps,features)))
-model.add(LSTM(512,dropout=0.5))
+model.add(LSTM(32,dropout=0.5,activation='ReLU'))
 model.add(Dense(1,activation='ReLU'))
 
-model.compile(optimizer='adam',loss='mse',metrics=['accuracy'])
+opt = keras.optimizers.Adam(learning_rate=0.03)
+model.compile(optimizer=opt,loss='mse',metrics=['accuracy'])
 model.summary()
 
 #-----------------------------------
 #           Training
 #-----------------------------------
 
-model.fit(train_x, train_y, epochs=50, batch_size=32, validation_data=(test_x,test_y))
+
+history = model.fit(train_x, train_y, epochs=50, batch_size=32, validation_data=(test_x,test_y))
 
 # Evaluate the model
 loss, acc = model.evaluate(test_x,test_y)
