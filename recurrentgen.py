@@ -12,25 +12,25 @@ import matplotlib.pyplot as plt
 #           Data Preperation
 #-----------------------------------
 
-#getting the data from the pickle files
-with open("test_data/oh_encoded_df.pkl","rb") as k:
-    ohdf = pickle.load(k)
+#getting the data from the pickle file
 with open("test_data/label_encoded_df.pkl","rb") as l:
-    labeldf = pickle.load(l)
+    df = pickle.load(l)
 
-x = np.array(ohdf,dtype=object)
+x = np.array(df,dtype=object)
 x = np.asarray(x).astype('float32')
-y = np.array(labeldf,dtype=object)
-y = np.asarray(y).astype('float32')
+
 #preparing the test and train sets with the test set being 30% of the data
-traindata, testdata, trainlabel, testlabel = train_test_split(x,y, test_size=0.3, random_state=42)
+train, test = train_test_split(x, test_size=0.3, random_state=42)
 
 
 # Reshape the data to fit the input shape of the SimpleRNN layer
-steps = 4
-features = traindata.shape[1]
-traindata = traindata.reshape((traindata.shape[0], steps, features))
-testdata = testdata.reshape((testdata.shape[0], steps, features))
+steps = 1
+features = train.shape[1] -1
+train_x = train[:,:-1].reshape((train.shape[0], steps, features))
+train_y = train[:,-1]
+test_x = test[:,:-1].reshape((test.shape[0], steps, features))
+test_y = test[:,-1]
+
 
 
 #-----------------------------------
@@ -39,20 +39,20 @@ testdata = testdata.reshape((testdata.shape[0], steps, features))
 
 model = Sequential()
 
-model.add(SimpleRNN(32,input_shape=(traindata.shape[1],),activation="relu"))
+model.add(SimpleRNN(32,input_shape=(steps,features),activation="relu"))
 model.add(Dense(8,activation='relu'))
 model.add(Dense(1))
 
-model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+model.compile(optimizer='adam',loss='mse',metrics=['accuracy'])
 model.summary()
 #-----------------------------------
 #           Training
 #-----------------------------------
 
 
-model.fit(traindata,trainlabel, epochs=50, batch_size=32, validation_data=(testdata, testlabel))
+model.fit(train_x, train_y, epochs=50, batch_size=32, validation_data=(test_x,test_y))
 
 # Evaluate the model
-loss, acc = model.evaluate(testdata,testlabel)
+loss, acc = model.evaluate(test_x,test_y)
 print("Test loss: ", loss)
 print("Test accuracy: ", acc)
