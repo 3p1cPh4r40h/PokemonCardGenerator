@@ -25,7 +25,7 @@ test_array = test_df.values
 train_array = train_array[:, 1:]
 test_array = test_array[:, 1:]
 
-# create a new array with shape (n, 5, 6)
+# create a new array with shape (2, 5, 6)
 reshaped_train_data = np.zeros((train_array.shape[0], 5, 6))
 
 for i in range(reshaped_train_data.shape[0]):
@@ -46,7 +46,6 @@ for i in range(reshaped_test_data.shape[0]):
                 reshaped_test_data[i,j,k] = int(test_array[i, k])
             else:
                 reshaped_test_data[i,j,k] = int(test_array[i, j+5])
-
 class VAE(tf.keras.Model):
     def __init__(self, latent_dim):
         super(VAE, self).__init__()
@@ -54,8 +53,7 @@ class VAE(tf.keras.Model):
         
         # Encoder
         self.encoder = tf.keras.Sequential([
-            layers.Conv1D(16, 3, activation='relu', padding='same', input_shape=(5,6)),
-            layers.Flatten(),
+            layers.LSTM(16, input_shape=(5,6), return_sequences=False),
             layers.Dense(latent_dim + latent_dim),
         ])
         
