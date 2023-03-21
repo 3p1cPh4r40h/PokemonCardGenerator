@@ -1,6 +1,6 @@
 from tensorflow import keras
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, SimpleRNN
+from keras.layers import LSTM, Dense, SimpleRNN, Embedding, Input
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 import pickle
@@ -20,10 +20,10 @@ x = np.array(df,dtype=object)
 x = np.asarray(x).astype('float32')
 
 #preparing the test and train sets with the test set being 30% of the data
-train, test = train_test_split(x, test_size=0.3, random_state=42)
+train, test = train_test_split(x, test_size=0.2, random_state=42)
 
 
-# Reshape the data to fit the input shape of the SimpleRNN layer
+# Reshape the data to fit the input shape of the model
 steps = 1
 features = train.shape[1] -1
 train_x = train[:,:-1].reshape((train.shape[0], steps, features))
@@ -39,16 +39,16 @@ test_y = test[:,-1]
 
 model = Sequential()
 
-model.add(SimpleRNN(32,input_shape=(steps,features),activation="relu"))
-model.add(Dense(8,activation='relu'))
-model.add(Dense(1))
+model.add(Input(shape=(steps,features)))
+model.add(LSTM(512,dropout=0.5))
+model.add(Dense(1,activation='ReLU'))
 
 model.compile(optimizer='adam',loss='mse',metrics=['accuracy'])
 model.summary()
+
 #-----------------------------------
 #           Training
 #-----------------------------------
-
 
 model.fit(train_x, train_y, epochs=50, batch_size=32, validation_data=(test_x,test_y))
 
