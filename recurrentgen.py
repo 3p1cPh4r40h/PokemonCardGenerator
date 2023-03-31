@@ -19,7 +19,7 @@ with open("test_data/label_encoded_df.pkl","rb") as l:
 x = np.array(df,dtype=object)
 x = np.asarray(x).astype('float32')
 
-#preparing the test and train sets with the test set being 30% of the data
+#preparing the test and train sets with the test set being 20% of the data
 train, test = train_test_split(x, test_size=0.2, random_state=42)
 
 
@@ -40,10 +40,19 @@ test_y = test[:,-1]
 model = Sequential()
 
 model.add(Input(shape=(steps,features)))
+model.add(LSTM(64,dropout=0.5,activation='ReLU',return_sequences=True))
+model.add(LSTM(64,dropout=0.5,activation='ReLU',return_sequences=True))
+model.add(LSTM(64,dropout=0.5,activation='ReLU',return_sequences=True))
+model.add(LSTM(64,dropout=0.5,activation='ReLU',return_sequences=True))
+model.add(LSTM(64,dropout=0.5,activation='ReLU',return_sequences=True))
+model.add(LSTM(64,dropout=0.5,activation='ReLU',return_sequences=True))
 model.add(LSTM(32,dropout=0.5,activation='ReLU'))
-model.add(Dense(1,activation='ReLU'))
+model.add(Dense(16,activation='relu'))
+model.add(Dense(16,activation='relu'))
+model.add(Dense(16,activation='relu'))
+model.add(Dense(1,activation='linear'))
 
-opt = keras.optimizers.Adam(learning_rate=0.03)
+opt = keras.optimizers.Adam(learning_rate=0.01)
 model.compile(optimizer=opt,loss='mse',metrics=['accuracy'])
 model.summary()
 
