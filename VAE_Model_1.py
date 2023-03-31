@@ -84,6 +84,7 @@ class VAE(tf.keras.Model):
 
 # Load your data here
 train_data = reshaped_train_data
+test_data = reshaped_test_data
 
 # Define the loss function
 def vae_loss(x, x_recon, mean, logvar):
@@ -103,9 +104,8 @@ batch_size = 32
 losses = []
 accuracies = []
 
-test_data = reshaped_test_data
 # Train the model
-epochs = 10
+epochs = 4
 for epoch in range(epochs):
     print('Epoch:', epoch+1)
     for step in range(train_data.shape[0] // batch_size):
@@ -122,21 +122,48 @@ for epoch in range(epochs):
         if step % 100 == 0:
             print('Step:', step, 'Loss:', loss.numpy())
         
-    # Evaluate the model on the test set after each epoch
-    test_loss = vae_loss(test_data, *vae(test_data))
-    # Append the test loss value to the list
-    losses.append(test_loss.numpy())
-    
-    print('Test Loss:', test_loss.numpy())
+    # Evaluate the model on the train set after each epoch
+    x_train = train_data
+    x_train_recon, _, _ = vae(x_train)
+    train_loss = vae_loss(x_train, x_train_recon, *vae.encode(x_train))
+    losses.append(train_loss.numpy())
 
-# Plot the loss values over time
+    # Calculate the accuracy of the generated samples
+    generated_data = vae.decode(np.random.normal(0, 1, size=(train_data.shape[0], latent_dim)))
+    generated_data = np.where(generated_data > 0.5, 1, 0)
+    accuracy = np.mean(np.all(generated_data == train_data, axis=(1, 2)))
+    accuracies.append(accuracy)
+
+    print('Train Loss:', train_loss.numpy())
+    print('Accuracy:', accuracy)
+
+# Plot the loss and accuracy values over time
 import matplotlib.pyplot as plt
 
 plt.plot(losses)
-plt.title('Loss over Time')
-plt.xlabel('Step')
+plt.legend(['Loss'])
+plt.xlabel('Steps')
 plt.ylabel('Loss')
 plt.show()
+
+plt.plot(accuracies)
+plt.legend(['Accuracy'])
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.show()
+
+x_test = test_data
+x_test_recon, _, _ = vae(x_test)
+test_loss = vae_loss(x_test, x_test_recon, *vae.encode(x_test))
+# Calculate the accuracy of the generated samples
+generated_data = vae.decode(np.random.normal(0, 1, size=(test_data.shape[0], latent_dim)))
+generated_data = np.where(generated_data > 0.5, 1, 0)
+print(generated_data.shape)
+print(test_array.shape)
+val_accuracy = np.mean(np.all(generated_data == test_data, axis=(1, 2)))
+
+print("Validation Loss: " + str(test_loss))
+print("Validation accuracy: " + str(val_accuracy))
 
 # Load the test data
 test_data = reshaped_test_data
