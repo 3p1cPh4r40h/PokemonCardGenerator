@@ -108,7 +108,7 @@ losses = []
 accuracies = []
 
 # Train the model
-epochs = 4
+epochs = 30
 for epoch in range(epochs):
     print('Epoch:', epoch+1)
     for step in range(train_data.shape[0] // batch_size):
@@ -140,19 +140,25 @@ for epoch in range(epochs):
     print('Train Loss:', train_loss.numpy())
     print('Accuracy:', accuracy)
 
-# Plot the loss and accuracy values over time
+# Plot the loss values over time
 import matplotlib.pyplot as plt
 
-plt.plot(losses)
-plt.legend(['Loss'])
-plt.xlabel('Steps')
-plt.ylabel('Loss')
-plt.show()
-
-plt.plot(accuracies)
-plt.legend(['Accuracy'])
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
+step_to_epoch_ratio = int(len(losses) / len(accuracies))
+fig, ax = plt.subplots()
+ax.plot(losses[::step_to_epoch_ratio], color='b')
+#add x-axis label
+ax.set_xlabel('Epoch', fontsize=14)
+# Set x-axis to use integers
+plt.xticks(range(1,len(accuracies)))
+#add y-axis label
+ax.set_ylabel('Loss', color='b', fontsize=16)
+#define second y-axis that shares x-axis with current plot
+ax2 = ax.twinx()
+#add second line to plot
+ax2.plot(accuracies, color='r')
+#add second y-axis label
+ax2.set_ylabel('Accuracy', color='r', fontsize=16)
+fig.suptitle('Training Loss vs Accuracy')
 plt.show()
 
 x_test = test_data
