@@ -25,7 +25,7 @@ test_array = test_df.values
 train_array = train_array[:, 1:]
 test_array = test_array[:, 1:]
 
-# create a new array with shape (2, 5, 6)
+# create a new array with shape (n, 5, 6)
 reshaped_train_data = np.zeros((train_array.shape[0], 5, 6))
 
 for i in range(reshaped_train_data.shape[0]):
@@ -46,6 +46,7 @@ for i in range(reshaped_test_data.shape[0]):
                 reshaped_test_data[i,j,k] = int(test_array[i, k])
             else:
                 reshaped_test_data[i,j,k] = int(test_array[i, j+5])
+
 class VAE(tf.keras.Model):
     def __init__(self, latent_dim):
         super(VAE, self).__init__()
@@ -53,7 +54,8 @@ class VAE(tf.keras.Model):
         
         # Encoder
         self.encoder = tf.keras.Sequential([
-            layers.LSTM(16, input_shape=(5,6), return_sequences=False),
+            layers.Conv1D(16, 3, activation='relu', padding='same', input_shape=(5,6)),
+            layers.Flatten(),
             layers.Dense(latent_dim + latent_dim),
         ])
         
@@ -62,7 +64,7 @@ class VAE(tf.keras.Model):
             layers.Dense(5*6, activation='relu', input_shape=(latent_dim,)),
             layers.Reshape((5, 6)),
             layers.Conv1DTranspose(16, 3, activation='relu', padding='same'),
-            layers.Conv1DTranspose(6, 3, activation='sigmoid', padding='same')
+            layers.Conv1DTranspose(6, 3, activation='sigmoid', padding='same'),
         ])
         
     def encode(self, x):
@@ -84,13 +86,20 @@ class VAE(tf.keras.Model):
 
 # Load your data here
 train_data = reshaped_train_data
-test_data = reshaped_test_data
 
 # Define the loss function
 def vae_loss(x, x_recon, mean, logvar):
-    reconstruction_loss = tf.reduce_mean(tf.square(x - x_recon))
-    kl_divergence = -0.5 * tf.reduce_mean(1 + logvar - tf.square(mean) - tf.exp(logvar))
-    return reconstruction_loss + kl_divergence
+    batch_size = tf.shape(x)[0]
+    # Reshape the input and output to 2D tensors
+    x = tf.reshape(x, [batch_size, -1])
+    x_double = tf.cast(x, dtype=tf.double)
+    x_recon = tf.cast(tf.reshape(x_recon, [batch_size, -1]), tf.double)
+    # Compute the negative log-likelihood
+    neg_log_likelihood = -tf.reduce_sum(x_double * tf.math.log(x_recon + 1e-8) + (1 - x_double) * tf.math.log(1 - x_recon + 1e-8), axis=-1)
+    # Compute the KL divergence between the learned distribution and the standard normal distribution
+    kl_divergence = -0.5 * tf.reduce_sum(1 + logvar - tf.square(mean) - tf.exp(logvar), axis=-1)
+    kl_divergence = tf.cast(kl_divergence, tf.double)
+    return tf.reduce_mean(neg_log_likelihood + kl_divergence)
 
 # Create an instance of the VAE model
 latent_dim = 6
@@ -104,6 +113,7 @@ batch_size = 32
 losses = []
 accuracies = []
 
+test_data = reshaped_test_data
 # Train the model
 epochs = 30
 for epoch in range(epochs):
@@ -113,6 +123,7 @@ for epoch in range(epochs):
         with tf.GradientTape() as tape:
             x_recon, mean, logvar = vae(x)
             loss = vae_loss(x, x_recon, mean, logvar)
+            
         gradients = tape.gradient(loss, vae.trainable_variables)
         optimizer.apply_gradients(zip(gradients, vae.trainable_variables))
         
@@ -158,16 +169,17 @@ ax2.set_ylabel('Accuracy', color='r', fontsize=16)
 fig.suptitle('Training Loss vs Accuracy')
 plt.show()
 
+# Calculate loss in relation to test data
 x_test = test_data
 x_test_recon, _, _ = vae(x_test)
 test_loss = vae_loss(x_test, x_test_recon, *vae.encode(x_test))
-# Calculate the accuracy of the generated samples
+# Calculate the accuracy of the generated samples to the test data
 generated_data = vae.decode(np.random.normal(0, 1, size=(test_data.shape[0], latent_dim)))
 generated_data = np.where(generated_data > 0.5, 1, 0)
 print(generated_data.shape)
 print(test_array.shape)
 val_accuracy = np.mean(np.all(generated_data == test_data, axis=(1, 2)))
-
+# Print validated loss and accuracy scores
 print("Validation Loss: " + str(test_loss))
 print("Validation accuracy: " + str(val_accuracy))
 
