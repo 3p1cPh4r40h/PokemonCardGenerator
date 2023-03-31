@@ -2,7 +2,7 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
-
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 def decode_df(decoding, encoded):
     def lookup_encoding(col_name, value):
         encoding = decoding.loc[(decoding['column_name'] == col_name) & (decoding['decoding'] == value.iloc[0]), 'encoding'].values
@@ -25,8 +25,8 @@ test_data = np.reshape(test_df.values, (test_df.shape[0], test_df.shape[1], 1))
 model = tf.keras.Sequential([
     tf.keras.layers.Conv1D(filters=64, kernel_size=3, activation='relu', input_shape=(train_data.shape[1], 1)),
     tf.keras.layers.MaxPooling1D(pool_size=2),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(64, activation='relu'),
+   tf.keras.layers.Flatten(),
+   tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(ohe_card_df.shape[1], activation='softmax')
 ])
 
@@ -50,3 +50,6 @@ print(decoded_predictions)
 # Save predicted values and network
 pd.to_pickle(decoded_predictions, 'data\decoded_predictions_cnn.pkl')
 model.save('model_cnn.h5')
+
+	
+print('Accuracy: %.3f' % accuracy_score(test_data, decoded_predictions))
