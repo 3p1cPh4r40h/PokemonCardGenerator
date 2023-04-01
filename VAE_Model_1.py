@@ -223,9 +223,10 @@ print(decoded_df.head(10))
 # Add a nameless column for inverse transformation
 decoded_df.insert(0, '', 0)
 unscaled_output_array = scaler.inverse_transform(decoded_df)
-
-decoded_df = decoded_df.apply(lambda x: round(x)).astype(int)
-decoded_df = decode_df(decoding_dict, decoded_df)
+print(unscaled_output_array)
+unscaled_df = pd.DataFrame(unscaled_output_array, columns=label_encoded_df.columns)
+unscaled_df = unscaled_df.apply(lambda x: round(x)).astype(int)
+decoded_df = decode_df(decoding_dict, unscaled_df)
 print(decoded_df.head(1))
 # Save the decoded predictions
 decoded_df.to_csv('data.csv')
