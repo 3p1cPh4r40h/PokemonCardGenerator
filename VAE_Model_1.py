@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 # Read label encoded dataframe from pickle file
 label_encoded_df = pd.read_pickle('data\label_encoded_df.pkl')
-
+print(label_encoded_df.head(4))
 # Normalize data between 0 and 1
 scaler = MinMaxScaler()
 scaled_data = scaler.fit_transform(label_encoded_df)
@@ -88,9 +88,17 @@ test_data = reshaped_test_data
 
 # Define the loss function
 def vae_loss(x, x_recon, mean, logvar):
-    reconstruction_loss = tf.reduce_mean(tf.square(x - x_recon))
+    # Calculate binary cross entropy reconstruction loss
+    reconstruction_loss = tf.reduce_mean(
+        tf.keras.losses.binary_crossentropy(x, x_recon)
+    )
+    # Calculate KL divergence
     kl_divergence = -0.5 * tf.reduce_mean(1 + logvar - tf.square(mean) - tf.exp(logvar))
+    kl_divergence = kl_divergence * 0.0001
+
+    # Total loss is the sum of reconstruction loss and KL divergence
     return reconstruction_loss + kl_divergence
+
 
 # Create an instance of the VAE model
 latent_dim = 6
@@ -105,7 +113,7 @@ losses = []
 accuracies = []
 
 # Train the model
-epochs = 30
+epochs = 3
 for epoch in range(epochs):
     print('Epoch:', epoch+1)
     for step in range(train_data.shape[0] // batch_size):
@@ -146,7 +154,7 @@ ax.plot(losses[::step_to_epoch_ratio], color='b')
 #add x-axis label
 ax.set_xlabel('Epoch', fontsize=14)
 # Set x-axis to use integers
-plt.xticks(range(1,len(accuracies)))
+plt.xticks(range(1,epochs+1), rotation=45)
 #add y-axis label
 ax.set_ylabel('Loss', color='b', fontsize=16)
 #define second y-axis that shares x-axis with current plot
@@ -199,26 +207,25 @@ for i in range(decoded_data.shape[0]):
                     attack_average_var = attack_average_var/6
                     scaled_output_array[i, k+j] = attack_average_var
                     attack_average_var = 0
-                    
-print(scaled_output_array)
 
 def decode_df(decoding, encoded):
-    def lookup_encoding(col_name, value):
-        encoding = decoding.loc[(decoding['column_name'] == col_name) & (decoding['decoding'] == value.iloc[0]), 'encoding'].values
-        return encoding[0] if encoding.size > 0 else value
-    
-    return encoded.apply(lambda x: lookup_encoding(x.name, x) if x.name in decoding['column_name'].unique() else x)
+    for column, label_encoder in decoding.items():
+        if column != 'name':
+            print(column)
+            encoded[column] = encoded[column].map(dict(zip(label_encoder.transform(label_encoder.classes_), label_encoder.classes_)))
+    return encoded
 
 # Import decoding dictionary
-decoding_dict = pd.read_pickle('data\label_decoding_dict.pkl')
+decoding_dict = pd.read_pickle('data\label_encoder_objects.pkl')
 
 decoded_df = pd.DataFrame(scaled_output_array, columns=label_encoded_df.columns[1:])
+print(decoded_df.head(10))
 # Add a nameless column for inverse transformation
 decoded_df.insert(0, '', 0)
 unscaled_output_array = scaler.inverse_transform(decoded_df)
+
 decoded_df = decoded_df.apply(lambda x: round(x)).astype(int)
 decoded_df = decode_df(decoding_dict, decoded_df)
-print(decoded_df.head())
-
+print(decoded_df.head(1))
 # Save the decoded predictions
 decoded_df.to_csv('data.csv')
