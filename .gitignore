@@ -152,3 +152,4 @@ cython_debug/
 #.idea/
 *.pkl
 decoded_card_df.csv
+data.csv

@@ -116,6 +116,9 @@ accuracies = []
 epochs = 3
 for epoch in range(epochs):
     print('Epoch:', epoch+1)
+
+    seed = epoch
+
     for step in range(train_data.shape[0] // batch_size):
         x = train_data[step*batch_size : (step+1)*batch_size]
         with tf.GradientTape() as tape:
@@ -137,7 +140,8 @@ for epoch in range(epochs):
     losses.append(train_loss.numpy())
 
     # Calculate the accuracy of the generated samples
-    generated_data = vae.decode(np.random.normal(0, 1, size=(train_data.shape[0], latent_dim)))
+    rng = np.random.RandomState(seed)
+    generated_data = vae.decode(rng.normal(0, 1, size=(train_data.shape[0], latent_dim)))
     generated_data = np.where(generated_data > 0.5, 1, 0)
     accuracy = np.mean(np.all(generated_data == train_data, axis=(1, 2)))
     accuracies.append(accuracy)
