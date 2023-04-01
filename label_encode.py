@@ -83,5 +83,6 @@ for column, label_encoder in encoders.items():
 
 pd.to_pickle(le_card_df, 'data\label_encoded_df.pkl')
 pd.to_pickle(decoding_dict, 'data\label_decoding_dict.pkl')
+pd.to_pickle(encoders, 'data\label_encoder_objects.pkl')
 print(le_card_df.head())
 print(decoding_dict)
