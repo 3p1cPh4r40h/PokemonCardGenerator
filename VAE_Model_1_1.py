@@ -88,15 +88,9 @@ test_data = reshaped_test_data
 
 # Define the loss function
 def vae_loss(x, x_recon, mean, logvar):
-    # Calculate binary cross entropy reconstruction loss
-    reconstruction_loss = tf.reduce_mean(
-        tf.keras.losses.binary_crossentropy(x, x_recon)
-    )
-    # Calculate KL divergence
+    # Use mean squared error as the loss function with KL divergence
+    reconstruction_loss = tf.reduce_mean(tf.square(x - x_recon))
     kl_divergence = -0.5 * tf.reduce_mean(1 + logvar - tf.square(mean) - tf.exp(logvar))
-    kl_divergence = kl_divergence * 0.0001
-
-    # Total loss is the sum of reconstruction loss and KL divergence
     return reconstruction_loss + kl_divergence
 
 
